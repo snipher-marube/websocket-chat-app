@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room Test</title>
+</head>
+<body>
+    <h1>Simple WebSocket Test</h1>
+    <textarea id="log" rows="10" cols="50" readonly></textarea><br>
+    <input id="messageInput" type="text" size="50"><br>
+    <button id="submitButton">Send Message</button>
+
+    <script>
+        // 1. Establish the WebSocket connection
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/room/'
+        );
+
+        // 2. Event: Connection Opened
+        chatSocket.onopen = function(e) {
+            document.getElementById('log').value += 'Status: Connected!\\n';
+        };
+
+        // 3. Event: Message Received from Server
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.getElementById('log').value += data.message + '\\n';
+        };
+
+        // 4. Event: Connection Closed
+        chatSocket.onclose = function(e) {
+            document.getElementById('log').value += 'Status: Disconnected.\\n';
+        };
+
+        // 5. Send Message Handler
+        document.getElementById('submitButton').onclick = function(e) {
+            const input = document.getElementById('messageInput');
+            const message = input.value;
+
+            // Send the message as a JSON string
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+
+            input.value = ''; // Clear the input field
+        };
+    </script>
+</body>
+</html>
