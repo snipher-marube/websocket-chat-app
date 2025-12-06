@@ -17,9 +17,10 @@ Including another URLconf
 # config/urls.py
 from django.contrib import admin
 from django.urls import path
-from chat.views import room # Import the view
+from chat.views import room
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("chat/", room, name="chat_room"), # New URL for our test page
+    path('admin/', admin.site.urls),
+    path('chat/<str:room_name>/', room, name='chat_room'),
+    path('', room, name='home'),  # Default to general room
 ]

@@ -1,48 +1,167 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat Room Test</title>
+    <title>Chat Room: {{ room_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        #chat-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        #chat-log {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .system-message {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            font-style: italic;
+        }
+        
+        .user-message {
+            background-color: #f1f8e9;
+        }
+        
+        .username {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        
+        #chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #chat-message-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        #chat-message-submit {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        #chat-message-submit:hover {
+            background-color: #45a049;
+        }
+        
+        .room-info {
+            background-color: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Simple WebSocket Test</h1>
-    <textarea id="log" rows="10" cols="50" readonly></textarea><br>
-    <input id="messageInput" type="text" size="50"><br>
-    <button id="submitButton">Send Message</button>
-
+    <div class="room-info">
+        <h2>Chat Room: <span id="room-name">{{ room_name }}</span></h2>
+        <p>Connected users: <span id="user-count">1</span></p>
+    </div>
+    
+    <div id="chat-container">
+        <div id="chat-log"></div>
+        
+        <div id="chat-input">
+            <input 
+                id="chat-message-input" 
+                type="text" 
+                placeholder="Type your message here..."
+                size="50"
+                autocomplete="off"
+            >
+            <button id="chat-message-submit">Send</button>
+        </div>
+    </div>
+    
     <script>
-        // 1. Establish the WebSocket connection
+        const roomName = "{{ room_name }}";
+        const username = prompt("Enter your username:", "Guest") || "Guest";
+        
+        // Establish WebSocket connection
         const chatSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/chat/room/'
+            'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
         );
-
-        // 2. Event: Connection Opened
-        chatSocket.onopen = function(e) {
-            document.getElementById('log').value += 'Status: Connected!\\n';
-        };
-
-        // 3. Event: Message Received from Server
+        
+        // Handle incoming messages
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            document.getElementById('log').value += data.message + '\\n';
+            const chatLog = document.getElementById('chat-log');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            if (data.username === 'System') {
+                messageDiv.classList.add('system-message');
+                messageDiv.innerHTML = `<em>${data.message}</em>`;
+            } else {
+                messageDiv.classList.add('user-message');
+                messageDiv.innerHTML = `
+                    <span class="username">${data.username}:</span>
+                    <span class="message-text">${data.message}</span>
+                `;
+            }
+            
+            chatLog.appendChild(messageDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
         };
-
-        // 4. Event: Connection Closed
+        
         chatSocket.onclose = function(e) {
-            document.getElementById('log').value += 'Status: Disconnected.\\n';
+            console.error('Chat socket closed unexpectedly');
+            alert('Connection lost. Please refresh the page.');
         };
-
-        // 5. Send Message Handler
-        document.getElementById('submitButton').onclick = function(e) {
-            const input = document.getElementById('messageInput');
-            const message = input.value;
-
-            // Send the message as a JSON string
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-
-            input.value = ''; // Clear the input field
+        
+        // Handle message submission
+        document.getElementById('chat-message-submit').onclick = function(e) {
+            const messageInput = document.getElementById('chat-message-input');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                chatSocket.send(JSON.stringify({
+                    'message': message
+                }));
+                messageInput.value = '';
+            }
         };
+        
+        // Allow sending message with Enter key
+        document.getElementById('chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // Enter key
+                document.getElementById('chat-message-submit').click();
+            }
+        };
+        
+        // Focus input field on load
+        document.getElementById('chat-message-input').focus();
     </script>
 </body>
 </html>

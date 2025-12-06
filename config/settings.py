@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-02a9l=@z!$-$y=&hf=qo724=2_^+n84y%jlawz^bpc@rv-!z9z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'channels', # Add the channels app
     'chat',     # Your new chat app
 ]
+
+INSTALLED_APPS = ['daphne'] + INSTALLED_APPS
 
 # New Setting: Tell Django to use ASGI and where to find the routing
 ASGI_APPLICATION = 'config.asgi.application'
@@ -120,3 +122,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
